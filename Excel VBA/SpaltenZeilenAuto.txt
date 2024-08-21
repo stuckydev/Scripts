@@ -1,0 +1,11 @@
+Sub SpaltenZeilenAuto()
+'
+' SpaltenZeilenAuto Makro
+'
+
+'
+    Cells.Select
+    Cells.EntireColumn.AutoFit
+    Cells.EntireRow.AutoFit
+    Range("A1").Select
+End Sub

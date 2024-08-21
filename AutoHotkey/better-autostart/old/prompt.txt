@@ -1,0 +1,24 @@
+Ich möchte ein Autohotkey (AHK) Script und dafür erkläre ich dir zuerst die [GRUNDLAGEN] und dann das [ZIEL] des Scripts. Um dir zu helfen gebe ich Hinweise zum [ABLAUF] des Skripts.
+
+[GRUNDLAGEN]
+Ich habe (im selben Ordner wie das Skript) eine Datei "programs.csv", die strukturiert ist nach Status und Programm.
+Sie enthält beliebig viele Zeilen mit Information und sieht beispielsweise so aus:
+C:\Users\stucky\AppData\Local\Programs\morgen\Morgen.exe;active
+C:\Users\stucky\AppData\Local\Programs\todoist\Todoist.exe;inactive
+
+Autohotkey kann dies nicht: GuiControl, ListView, Add, %Program%|%Status%
+dies muss anders gelöst werden
+
+[ZIEL]
+Via Script soll ein GUI mir die Programme und deren Status auflisten.
+Im GUI kann ich wählen, ob ein Programm active oder inactive ist und dies speichern.
+
+[ABLAUF]
+- Lese "programs.csv" ein und erstelle eine Liste mit den Programmen und deren Status
+- Die Programmnamen erkennst du so:
+	verwende die SplitPath-Funktion, um den Namen der Datei ohne Dateierweiterung aus dem Pfad zu extrahieren. Dann wird die StringReplace-Funktion verwendet, um alle Punkte (Dateierweiterungen) aus dem Dateinamen zu entfernen.
+- erstelle ein GUI mit der benötigten Anzahl Zeilen der einzelnen Programmen sowie dem jeweiligen Status pro Programm
+- 	der Status soll änderbar sein im GUI
+- im GUI wählt man, ob ein Programm active oder inactive ist
+- im GUI speichert man, so werden die Status ins CSV überschrieben
+- dann schliesst sich das GUI

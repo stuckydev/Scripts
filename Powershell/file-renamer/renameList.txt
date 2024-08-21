@@ -1,0 +1,2 @@
+C:\Users\stucky\Downloads\Testy\test1,C:\Users\stucky\Downloads\Testy\done1
+C:\Users\stucky\Downloads\Testy\test2,C:\Users\stucky\Downloads\Testy\done2

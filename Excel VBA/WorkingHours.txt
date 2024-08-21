@@ -1,0 +1,23 @@
+Sub WorkingHours()
+'
+' WorkingHours Makro
+'
+
+'
+    Cells.Select
+    Cells.EntireColumn.AutoFit
+    With Selection
+        .HorizontalAlignment = xlGeneral
+        .VerticalAlignment = xlBottom
+        .WrapText = True
+        .Orientation = 0
+        .AddIndent = False
+        .IndentLevel = 0
+        .ShrinkToFit = False
+        .ReadingOrder = xlContext
+        .MergeCells = False
+    End With
+    Cells.EntireColumn.AutoFit
+    Cells.EntireRow.AutoFit
+    Range("A1").Select
+End Sub

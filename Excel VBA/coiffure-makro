@@ -1,0 +1,87 @@
+Sub JinMakro()
+
+Dim WS As Worksheet
+Set WS = ActiveSheet
+
+With WS
+
+Application.ScreenUpdating = False
+
+' bereinigen Zeilen Original
+'========================================================================
+' DELETES ALL ROWS FROM A2 DOWNWARDS WHEN EMPTY IN COLUMN A
+'========================================================================
+    Last = Cells(Rows.Count, "B").End(xlUp).Row
+    For i = Last To 1 Step -1
+        If (Cells(i, "A").Value) = "" Then
+            Cells(i, "A").EntireRow.Delete
+        End If
+    Next i
+
+' erstellt Überschriften
+    Range("G1").Select
+    ActiveCell.FormulaR1C1 = "Datum"
+    Range("H1").Select
+    ActiveCell.FormulaR1C1 = "Mitarbeiter"
+    Range("I1").Select
+    ActiveCell.FormulaR1C1 = "Kunde"
+    Range("J1").Select
+    ActiveCell.FormulaR1C1 = "Leistung"
+    Range("K1").Select
+    ActiveCell.FormulaR1C1 = "Preis"
+    Range("G2").Select
+    
+'Formeln einfügen
+    Range("G2").FormulaLocal = "=WENN(TEIL(A2;3;1)=""."";A2;BEREICH.VERSCHIEBEN(G2;-1;0))"
+    Range("H2").FormulaLocal = "=WENN(A2<>"""";WENN(TEIL(A2;3;1)=""."";"""";A2);"""")"
+    Range("I2").FormulaLocal = "=WENN(WENN(TEIL(A2;3;1)=""."";B2;"""")="""";BEREICH.VERSCHIEBEN(I2;-1;0);WENN(TEIL(A2;3;1)=""."";B2;""""))"
+    Range("J2").FormulaLocal = "=WENN(TEIL(A2;3;1)=""."";"""";B2)"
+    Range("K2").FormulaLocal = "=WENN(TEIL(B2;3;1)=""."";"""";C2)"
+    
+'Formeln runterziehen
+    Range("G2:K2").Select
+    Selection.AutoFill Destination:=Range("G2:K1000"), Type:=xlFillDefault
+    
+'Werte kopieren und als Wert einfügen
+    Columns("G:K").Select
+    Selection.Copy
+    Selection.PasteSpecial Paste:=xlPasteValues, Operation:=xlNone, SkipBlanks _
+        :=False, Transpose:=False
+    Range("G1").Select
+    
+' bereinigen Zeilen neu
+'========================================================================
+' DELETES ALL ROWS FROM G2 DOWNWARDS WHEN EMPTY IN COLUMN H
+'========================================================================
+    Last = Cells(Rows.Count, "G").End(xlUp).Row
+    For i = Last To 1 Step -1
+        If (Cells(i, "H").Value) = "" Then
+            Cells(i, "H").EntireRow.Delete
+        End If
+    Next i
+
+' CHF entfernen und umwandeln
+    Columns("K:K").Select
+    Selection.Replace What:=" CHF", Replacement:="", LookAt:=xlPart, _
+        SearchOrder:=xlByRows, MatchCase:=False, SearchFormat:=False, _
+        ReplaceFormat:=False
+    
+' Spalten A bis F ausblenden
+    Columns("A:F").Select
+    Selection.EntireColumn.Hidden = True
+    
+' Spaltenbreite anpassen
+    Cells.Select
+    Range("G1").Activate
+    Cells.EntireColumn.AutoFit
+    Range("G1").Select
+
+' go to Home
+Range("G1").Select
+Application.Goto Reference:=Range("G1"), Scroll:=True
+    
+Application.ScreenUpdating = True
+
+End With
+
+End Sub
