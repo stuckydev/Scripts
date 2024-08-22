@@ -10,46 +10,58 @@ Attribute VB_Exposed = True
 Private Sub Workbook_Open()
 
     ' *** Backup Feature: Begin ***
-    On Error Resume Next  ' Verhindert, dass Fehlermeldungen angezeigt werden
+    ' Überprüfen, ob in der Zelle B5 des Blatts "Settings" der Wert "On" ist.
+    If ThisWorkbook.Sheets("Settings").Range("B5").Value = "On" Then
     
-    Dim oneDriveFolder As String
-    Dim backupFolder As String
-    Dim backupFileName As String
-    Dim currentFileName As String
-    Dim currentDateTime As String
-
-    ' Name des aktuellen Workbooks
-    currentFileName = ThisWorkbook.Name
-
-    ' Holen des OneDrive for Business Pfades
-    oneDriveFolder = Environ("OneDriveCommercial") & "\"
-
-    ' Wenn OneDrive for Business gefunden wurde
-    If Len(oneDriveFolder) > 0 Then
-        ' °°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°° HIER CODE ANPASSEN PFAD °°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
-        ' Setze den Pfad für den Backup-Ordner
-        backupFolder = oneDriveFolder & "Backups_" & currentFileName & "\"
-        ' °°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
-
+        On Error Resume Next  ' Verhindert, dass Fehlermeldungen angezeigt werden
+        
+        Dim oneDriveFolder As String
+        Dim backupFolder As String
+        Dim backupFileName As String
+        Dim currentFileName As String
+        Dim currentDateTime As String
+        Dim customBackupPath As String
+    
+        ' Name des aktuellen Workbooks
+        currentFileName = ThisWorkbook.Name
+    
+        ' Holen des OneDrive for Business Pfades
+        oneDriveFolder = Environ("OneDriveCommercial") & "\"
+    
+        ' Prüfen, ob in B6 ein Pfad angegeben ist
+        customBackupPath = ThisWorkbook.Sheets("Settings").Range("B6").Value
+        
+        ' Wenn B6 nicht leer ist, nutze den Pfad aus B6 als Backup-Pfad
+        If Len(customBackupPath) > 0 Then
+            backupFolder = customBackupPath
+        Else
+            ' Wenn OneDrive for Business gefunden wurde
+            If Len(oneDriveFolder) > 0 Then
+                ' Setze den Pfad für den Backup-Ordner
+                backupFolder = oneDriveFolder & "Backups_" & currentFileName & "\"
+            End If
+        End If
+    
         ' Erstelle den Backup-Ordner, falls er nicht existiert
-        If Dir(backupFolder, vbDirectory) = "" Then
+        If Len(backupFolder) > 0 And Dir(backupFolder, vbDirectory) = "" Then
             MkDir backupFolder
         End If
-
+    
         ' Erstelle den aktuellen Datum und Zeit String
         currentDateTime = Format(Now, "yyyymmdd_HHMMSS")
-
+    
         ' Erstelle den Namen der Backup-Datei
         backupFileName = backupFolder & Left(currentFileName, Len(currentFileName) - 5) & "_" & currentDateTime & ".xlsm"
-
-        ' Speichere eine Kopie des Workbooks im OneDrive-Ordner
+    
+        ' Speichere eine Kopie des Workbooks im festgelegten Backup-Ordner
         ThisWorkbook.SaveCopyAs backupFileName
-        
+            
         ' Schreibe das Datum und die Zeit des letzten Backups in die Zelle A2 auf dem Blatt "Home"
         Worksheets("Home").Range("A2").Value = "Letztes Backup: " & Format(Now, "dd.mm.yyyy, HH:MM")
+    
+        On Error GoTo 0  ' Deaktiviert den Fehlerbehandlungsmodus
+    
     End If
-
-    On Error GoTo 0  ' Deaktiviert den Fehlerbehandlungsmodus
     ' *** Backup Feature: End ***
 
     ' Hier können weitere Makros eingefügt werden, die beim Öffnen der Datei ausgeführt werden sollen
@@ -57,40 +69,38 @@ Private Sub Workbook_Open()
 End Sub
 
 Private Sub Workbook_BeforeSave(ByVal SaveAsUI As Boolean, Cancel As Boolean)
-    ' Überprüft die Umgebungsvariable "OneDriveCommercial"
-    Dim onedrivePath As String
-    onedrivePath = Environ("OneDriveCommercial")
+    ' Überprüfen, ob in der Zelle B7 des Blatts "Settings" der Wert "On" ist.
+    If ThisWorkbook.Sheets("Settings").Range("B7").Value = "On" Then
     
-    ' °°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°° HIER CODE ANPASSEN PFAD °°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
-    ' Nur fortfahren, wenn die Umgebungsvariable mit "OneDrive - StuCon GmbH" endet
-    If Right(onedrivePath, Len("OneDrive - StuCon GmbH")) = "OneDrive - StuCon GmbH" Then
-        ' Ruft die Export-Funktion auf und übergibt den OneDrive-Pfad
-        Call ExportVisualBasicCode(onedrivePath)
-    ' °°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
+        ' Überprüft, ob in B8 ein Pfad angegeben ist
+        Dim backupPath As String
+        backupPath = ThisWorkbook.Sheets("Settings").Range("B8").Value
+        
+        ' Wenn B8 nicht leer ist, den Pfad verwenden
+        If Len(backupPath) > 0 Then
+            Call ExportVisualBasicCode(backupPath)
+        End If
+        
+        ' Wenn B8 leer ist, wird nichts unternommen und keine Fehlermeldung ausgegeben.
     End If
 End Sub
 
-Public Sub ExportVisualBasicCode(ByVal onedrivePath As String)
+Public Sub ExportVisualBasicCode(ByVal backupPath As String)
     ' Definiert Konstanten für die verschiedenen Typen von VBA-Komponenten
     Const Module = 1          ' Standardmodul (.bas)
     Const ClassModule = 2     ' Klassenmodul (.cls)
     Const Form = 3            ' UserForm (.frm)
     Const Document = 100      ' Dokumentmodul (z.B. DieseArbeitsmappe, Sheet1)
-    Const Padding = 24        ' Abstand für die Debug-Ausgabe (Kosmetik)
 
     ' Deklariert Variablen
     Dim VBComponent As Object  ' Objektvariable für jede VBA-Komponente
-    Dim count As Integer       ' Zähler für exportierte Dateien
     Dim path As String         ' Pfad für jede exportierte Datei
     Dim directory As String    ' Verzeichnis, in das die Dateien exportiert werden
     Dim extension As String    ' Dateierweiterung basierend auf dem Typ der Komponente
     Dim fso As New FileSystemObject ' Objekt zum Arbeiten mit dem Dateisystem
     
-    ' °°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°° HIER CODE ANPASSEN PFAD °°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
-    ' Definiert das Exportverzeichnis im OneDrive-Pfad
-    directory = onedrivePath ' & "\Tool xyz\VBA"
-    count = 0  ' Initialisiert den Zähler
-    ' °°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
+    ' Definiert das Exportverzeichnis im Backup-Pfad
+    directory = backupPath
 
     ' Überprüft, ob das Verzeichnis existiert, und erstellt es bei Bedarf
     If Not fso.FolderExists(directory) Then
@@ -111,24 +121,12 @@ Public Sub ExportVisualBasicCode(ByVal onedrivePath As String)
             Case Else
                 extension = ".txt"  ' Fallback für unbekannte Typen (sehr selten)
         End Select
-            
-        On Error Resume Next  ' Ignoriert Fehler, um die Schleife fortzusetzen
-        Err.Clear  ' Löscht vorherige Fehler
 
         ' Setzt den vollständigen Pfad für die zu exportierende Datei
         path = directory & "\" & VBComponent.Name & extension
         
         ' Exportiert die Komponente in eine Datei
         Call VBComponent.Export(path)
-        
-        ' Überprüft, ob beim Exportieren ein Fehler aufgetreten ist
-        If Err.Number <> 0 Then
-            Call MsgBox("Fehler beim Export von " & VBComponent.Name & " nach " & path, vbCritical)
-        Else
-            count = count + 1  ' Erhöht den Zähler für erfolgreiche Exporte
-            Debug.Print "Exportiert " & Left$(VBComponent.Name & ":" & Space(Padding), Padding) & path
-        End If
 
-        On Error GoTo 0  ' Fehlerbehandlung ein
     Next
 End Sub
