@@ -15,20 +15,16 @@ Private Sub Workbook_Open()
     Dim VBAexportFolderPath As String
     VBAexportFolderPath = ThisWorkbook.Sheets("Einstellungen").Range("B8").Value
 
-    ' Prüfen, ob der Backup-Ordner existiert
-    If Dir(backupFolderPath, vbDirectory) = "" Then
-        If ThisWorkbook.Sheets("Einstellungen").Range("B5").Value = "On" Then
-        MsgBox "Der Backup-Ordner existiert nicht: " & backupFolderPath, vbExclamation, "Fehler"
+    ' Prüfen, ob der Backup-Ordner existiert und ob die Aktion aktiviert ist
+    If Dir(backupFolderPath, vbDirectory) = "" And ThisWorkbook.Sheets("Einstellungen").Range("B5").Value = "On" Then
         Exit Sub
     End If
 
-    ' Prüfen, ob der VBA-Export-Ordner existiert
-    If Dir(VBAexportFolderPath, vbDirectory) = "" Then
-        If ThisWorkbook.Sheets("Einstellungen").Range("B7").Value = "On" Then
-        MsgBox "Der VBA-Export-Ordner existiert nicht: " & VBAexportFolderPath, vbExclamation, "Fehler"
+    ' Prüfen, ob der VBA-Export-Ordner existiert und ob die Aktion aktiviert ist
+    If Dir(VBAexportFolderPath, vbDirectory) = "" And ThisWorkbook.Sheets("Einstellungen").Range("B7").Value = "On" Then
         Exit Sub
     End If
-
+    
     ' Auto-Backup aktiv?
     If ThisWorkbook.Sheets("Einstellungen").Range("B5").Value = "On" Then
 
