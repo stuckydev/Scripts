@@ -16,13 +16,19 @@ Private Sub Workbook_Open()
     VBAexportFolderPath = ThisWorkbook.Sheets("Einstellungen").Range("B8").Value
 
     ' Prüfen, ob der Backup-Ordner existiert und ob die Aktion aktiviert ist
-    If Dir(backupFolderPath, vbDirectory) = "" And ThisWorkbook.Sheets("Einstellungen").Range("B5").Value = "On" Then
-        Exit Sub
+    If ThisWorkbook.Sheets("Einstellungen").Range("B5").Value = "On" Then
+        If Dir(backupFolderPath, vbDirectory) = "" Then
+            MsgBox "Einstellungen: Der Ordnerpfad in B6 existiert nicht." & vbCrLf & "- Gültigen Pfad eingeben" & vbCrLf & "oder" & vbCrLf & "- Auto-Backup auf 'Off' stellen.", vbExclamation
+            Exit Sub
+        End If
     End If
 
     ' Prüfen, ob der VBA-Export-Ordner existiert und ob die Aktion aktiviert ist
-    If Dir(VBAexportFolderPath, vbDirectory) = "" And ThisWorkbook.Sheets("Einstellungen").Range("B7").Value = "On" Then
-        Exit Sub
+    If ThisWorkbook.Sheets("Einstellungen").Range("B7").Value = "On" Then
+        If Dir(VBAexportFolderPath, vbDirectory) = "" Then
+            MsgBox "Einstellungen: Der Ordnerpfad in B8 existiert nicht." & vbCrLf & "- Gültigen Pfad eingeben" & vbCrLf & "oder" & vbCrLf & "- VBA-Export auf 'Off' stellen.", vbExclamation
+            Exit Sub
+        End If
     End If
     
     ' Auto-Backup aktiv?
@@ -43,7 +49,7 @@ Private Sub Workbook_Open()
         ThisWorkbook.SaveCopyAs backupFilePath
 
         ' Schreibe Zeitstempel des Backups in Zelle A2
-        ThisWorkbook.Sheets("Einstellungen").Range("A2").Value = "Letztes Backup: " & Format(Now, "dd.mm.yyyy, HH:mm")
+        ThisWorkbook.Sheets("Einstellungen").Range("B2").Value = Format(Now, "dd.mm.yyyy HH:mm")
 
         On Error GoTo 0  ' Fehlerbehandlung deaktivieren - nach erfolgreicher Ausführung
 
@@ -52,7 +58,6 @@ Private Sub Workbook_Open()
     Exit Sub
 
 ErrorHandler:
-    Call LogError(Err.Description, VBAexportFolderPath)
     MsgBox "Ein Fehler ist aufgetreten: " & Err.Description, vbCritical
     On Error GoTo 0  ' Fehlerbehandlung deaktivieren
 
@@ -62,31 +67,43 @@ Private Sub Workbook_BeforeSave(ByVal SaveAsUI As Boolean, Cancel As Boolean)
 
     ' VBA-Export aktiv?
     If ThisWorkbook.Sheets("Einstellungen").Range("B7").Value = "On" Then
-
-        On Error GoTo ErrorHandler  ' Fehlerbehandlung aktivieren
-
-        ' Ordnerpfad initialisieren
+        
+        Dim lastExportTime As Date
+        Dim currentTime As Date
         Dim VBAexportFolderPath As String
-        VBAexportFolderPath = ThisWorkbook.Sheets("Einstellungen").Range("B8").Value
+        
+        ' Zeit des letzten Exports abrufen
+        lastExportTime = ThisWorkbook.Sheets("Einstellungen").Range("B3").Value
+        currentTime = Now
 
-        ' Prüfen, ob der Ordnerpfad leer ist
-        If VBAexportFolderPath = "" Then
-            MsgBox "Einstellungen: Der Ordnerpfad in B8 ist leer." & vbCrLf & "- Gültigen Pfad eingeben" & vbCrLf & "oder" & vbCrLf & "- VBA-Export auf 'Off' stellen.", vbExclamation
-            Cancel = True  ' Speichern abbrechen
-            Exit Sub
+        ' Prüfen, ob seit dem letzten Export 5 Minuten vergangen sind
+        If DateDiff("n", lastExportTime, currentTime) >= 5 Then
+            
+            On Error GoTo ErrorHandler  ' Fehlerbehandlung aktivieren
+
+            ' Ordnerpfad initialisieren
+            VBAexportFolderPath = ThisWorkbook.Sheets("Einstellungen").Range("B8").Value
+
+            ' Prüfen, ob der Ordnerpfad leer ist
+            If VBAexportFolderPath = "" Then
+                MsgBox "Einstellungen: Der Ordnerpfad in B8 ist leer." & vbCrLf & "- Gültigen Pfad eingeben" & vbCrLf & "oder" & vbCrLf & "- VBA-Export auf 'Off' stellen.", vbExclamation
+                Cancel = True  ' Speichern abbrechen
+                Exit Sub
+            End If
+
+            ' Export durchführen
+            Call ExportVBAComponents(VBAexportFolderPath)
+            
+            ' Zeitstempel des letzten Exports aktualisieren
+            ThisWorkbook.Sheets("Einstellungen").Range("B3").Value = currentTime
+
+            On Error GoTo 0  ' Fehlerbehandlung deaktivieren - nach erfolgreicher Ausführung
         End If
-
-        ' Export durchführen
-        Call ExportVBAComponents(VBAexportFolderPath)
-
-        On Error GoTo 0  ' Fehlerbehandlung deaktivieren - nach erfolgreicher Ausführung
-
     End If
 
     Exit Sub
 
 ErrorHandler:
-    Call LogError(Err.Description, VBAexportFolderPath)
     MsgBox "Ein Fehler ist aufgetreten: " & Err.Description, vbCritical
     On Error GoTo 0  ' Fehlerbehandlung deaktivieren
 
@@ -109,31 +126,5 @@ Public Sub ExportVBAComponents(ByVal VBAexportFolderPath As String)
         componentFilePath = VBAexportFolderPath & Application.PathSeparator & component.Name & fileExtension
         component.Export componentFilePath
     Next
-
-End Sub
-
-Private Sub LogError(errorMessage As String, VBAexportFolderPath As String)
-
-    Dim filePath As String
-    Dim currentDateTime As String
-    Dim logsFolderPath As String
-
-    currentDateTime = Format(Now, "yyyymmdd_HHMMSS")
-
-    ' Setze den Pfad für den Logs-Ordner
-    logsFolderPath = VBAexportFolderPath & Application.PathSeparator & "Logs"
-
-    ' Überprüfen, ob der Logs-Ordner existiert, ansonsten erstellen
-    If Dir(logsFolderPath, vbDirectory) = "" Then
-        MkDir logsFolderPath
-    End If
-
-    ' Setze den vollständigen Pfad für die Log-Datei
-    filePath = logsFolderPath & Application.PathSeparator & "error_" & currentDateTime & ".txt"
-
-    ' Fehler in die Log-Datei schreiben
-    Open filePath For Append As #1
-    Print #1, Now & ": " & errorMessage
-    Close #1
 
 End Sub
