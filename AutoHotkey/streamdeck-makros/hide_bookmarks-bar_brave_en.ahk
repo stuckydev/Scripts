@@ -5,11 +5,15 @@ IfWinExist, ahk_class Chrome_WidgetWin_1
     WinWaitActive, ahk_class Chrome_WidgetWin_1
 }
 
-; Now send the commands to toggle the bookmarks bar
+; ACHTUNG funktioniert abhängig der Browsersprache!!!!
+
 Send, !e    ; Opens the "Settings and more" menu (Alt+E)
 Sleep, 50  ; Waits for the menu to open
-Send, b     ; Selects the "Bookmarks" menu
+Send, l     ; Selects the "Bookmarks" menu
+Send, {Enter}
 Sleep, 50  ; Waits for the submenu to open
-Send, s     ; Show menu
+Send, l     ; Show menu
+Send, {Enter}
 Send, n     ; Send "never"
+Send, {Enter}
 return
