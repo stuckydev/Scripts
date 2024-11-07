@@ -1,0 +1,98 @@
+Sub SummiereArbeitszeitUndFormatieren()
+    Dim wsExport As Worksheet
+    Dim wsErgebnisse As Worksheet
+    Dim lastRow As Long
+    Dim currentRow As Long
+    Dim startRow As Long
+    Dim kostenstelle As String
+    Dim exakteKostenstelle As String
+    Dim summeArbeitszeit As Double
+    Dim targetRow As Long
+    Dim sheetExists As Boolean
+    Dim sheet As Worksheet
+
+    ' Erstes Blatt umbenennen und erste Zeile löschen
+    ActiveWorkbook.Sheets(1).Name = "Export"
+    Set wsExport = ActiveWorkbook.Sheets("Export")
+    wsExport.Name = "Export"
+    wsExport.Rows(1).Delete
+    
+    ' Überprüfen, ob ein Blatt "Ergebnisse" bereits existiert, und falls nicht, erstellen
+    sheetExists = False
+    For Each sheet In ActiveWorkbook.Sheets
+        If sheet.Name = "Ergebnisse" Then
+            sheetExists = True
+            Exit For
+        End If
+    Next sheet
+
+    If Not sheetExists Then
+        Set wsErgebnisse = ActiveWorkbook.Sheets.Add(After:=wsExport)
+        wsErgebnisse.Name = "Ergebnisse"
+    Else
+        Set wsErgebnisse = ActiveWorkbook.Sheets("Ergebnisse")
+        wsErgebnisse.Activate ' Blatt öffnen, falls "Ergebnisse" bereits existiert
+        Exit Sub
+    End If
+
+    ' Letzte Zeile in "Export" finden
+    lastRow = wsExport.Cells(wsExport.Rows.Count, "B").End(xlUp).Row
+
+    ' Sortiere die Daten nach Kostenstelle auf dem Export-Blatt
+    wsExport.Sort.SortFields.Clear
+    wsExport.Sort.SortFields.Add Key:=wsExport.Range("B2:B" & lastRow), _
+        SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+    With wsExport.Sort
+        .SetRange wsExport.Range("A1:I" & lastRow)
+        .Header = xlYes
+        .Apply
+    End With
+
+    ' Starte die Ausgabe in "Ergebnisse"
+    wsExport.Rows(1).Copy Destination:=wsErgebnisse.Rows(1) ' Kopfzeile kopieren
+    targetRow = 2 ' Zielzeile auf "Ergebnisse" initialisieren
+
+    ' Initialisieren der Variablen
+    startRow = 2
+    kostenstelle = wsExport.Cells(startRow, "B").Value
+    exakteKostenstelle = wsExport.Cells(startRow, "C").Value
+    summeArbeitszeit = 0
+
+    ' Durchlaufe alle Zeilen und summiere die Arbeitszeit je Kostenstelle
+    For currentRow = 2 To lastRow + 1
+        ' Prüfen, ob die Kostenstelle wechselt oder wir am Ende angekommen sind
+        If wsExport.Cells(currentRow, "B").Value <> kostenstelle Or currentRow > lastRow Then
+            ' Summe der Arbeitszeit in eine neue Zeile einfügen auf "Ergebnisse"
+            wsErgebnisse.Cells(targetRow, "B").Value = kostenstelle & " " & exakteKostenstelle
+            wsErgebnisse.Cells(targetRow, "I").Value = summeArbeitszeit
+            wsErgebnisse.Cells(targetRow, "I").NumberFormat = "[hh]:mm" ' Formatierung für Zeitangabe
+
+            ' Formatierung der Zwischenzeile auf hellgrauen Hintergrund, fette, schwarze Calibri-Schrift setzen
+            With wsErgebnisse.Range(wsErgebnisse.Cells(targetRow, "A"), wsErgebnisse.Cells(targetRow, "I"))
+                .Interior.Color = RGB(211, 211, 211) ' Hellgraue Füllung
+                .Font.Bold = True ' Fette Schrift
+                .Font.Color = RGB(0, 0, 0) ' Schwarze Schriftfarbe
+                .Font.Name = "Calibri" ' Schriftart Calibri
+            End With
+
+            targetRow = targetRow + 1 ' Zielzeile inkrementieren
+
+            ' Neue Kostenstelle und Summenwert initialisieren
+            kostenstelle = wsExport.Cells(currentRow, "B").Value
+            exakteKostenstelle = wsExport.Cells(currentRow, "C").Value
+            summeArbeitszeit = 0
+        End If
+
+        ' Kopiere die aktuelle Zeile auf das Blatt "Ergebnisse"
+        wsExport.Rows(currentRow).Copy Destination:=wsErgebnisse.Rows(targetRow)
+        targetRow = targetRow + 1 ' Zielzeile inkrementieren
+
+        ' Arbeitszeit zur Summe hinzufügen (Zelle in Zeitformat konvertieren)
+        summeArbeitszeit = summeArbeitszeit + wsExport.Cells(currentRow, "I").Value
+    Next currentRow
+    
+    wsErgebnisse.Columns.AutoFit ' Spalten auf optimale Breite
+
+End Sub
+
+
