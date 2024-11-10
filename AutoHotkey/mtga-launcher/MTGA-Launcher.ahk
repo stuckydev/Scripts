@@ -12,11 +12,11 @@ Run, steam://rungameid/2141910
 Run, C:\Users\STC\AppData\Local\Programs\untapped-companion\Untapped.gg Companion.exe, , Min
 Run, C:\Users\STC\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\17Lands.com\17Lands MTGA Client.appref-ms
 
-Sleep, 2000
+Sleep, 3000
 SplashImage, Off
 WinActivate, MTGA
 WinClose, Untapped.gg
-Sleep, 2000
+Sleep, 5000
 
 ; By exiting MTGA → closing all the Apps
 	WinWaitClose, MTGA
